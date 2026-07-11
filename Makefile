@@ -17,6 +17,7 @@ release: test
 	@ git tag "v$(VERSION)"
 	@ git push origin main "v$(VERSION)"
 	@ go run github.com/cli/cli/v2/cmd/gh@latest release create --generate-notes "v$(VERSION)"
+	@ $(MAKE) install
 
 install:
 	@ go install .
