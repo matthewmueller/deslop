@@ -1,0 +1,93 @@
+package envcheck
+
+import (
+	"fmt"
+	"go/ast"
+	"strings"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
+)
+
+var Analyzer = &analysis.Analyzer{
+	Name:     "envcheck",
+	Doc:      "reports direct os.Getenv/os.LookupEnv calls; use internal/env instead",
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
+	Run:      run,
+}
+
+var flagged = map[string]bool{
+	"Getenv":    true,
+	"LookupEnv": true,
+}
+
+const template = `package env
+
+import (
+    env11 "github.com/caarlos0/env/v11"
+)
+
+// Env environment
+type Env struct {
+    %s string ` + "`" + `env:"%s,required"` + "`" + `
+}
+
+// Load the environment
+func Load() (*Env, error) {
+    env := new(Env)
+    if err := env11.Parse(env); err != nil {
+        return nil, err
+    }
+    return env, nil
+}`
+
+func run(pass *analysis.Pass) (interface{}, error) {
+	if strings.HasSuffix(pass.Pkg.Path(), "internal/env") {
+		return nil, nil
+	}
+
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.CallExpr)(nil),
+	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		call := n.(*ast.CallExpr)
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return
+		}
+		ident, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return
+		}
+		if ident.Name != "os" || !flagged[sel.Sel.Name] {
+			return
+		}
+
+		envVar := extractStringArg(call)
+		msg := fmt.Sprintf(
+			"do not use os.%s directly; add %s to the Env struct in internal/env/env.go and load it via env.Load()\n\n"+
+				"If internal/env/env.go does not exist, create it with this template:\n\n%s",
+			sel.Sel.Name,
+			envVar,
+			fmt.Sprintf(template, envVar, envVar),
+		)
+		pass.Reportf(call.Pos(), "%s", msg)
+	})
+
+	return nil, nil
+}
+
+func extractStringArg(call *ast.CallExpr) string {
+	if len(call.Args) == 0 {
+		return "UNKNOWN"
+	}
+	lit, ok := call.Args[0].(*ast.BasicLit)
+	if !ok {
+		return "UNKNOWN"
+	}
+	return strings.Trim(lit.Value, `"`)
+}
