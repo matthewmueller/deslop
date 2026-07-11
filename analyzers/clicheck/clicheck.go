@@ -170,7 +170,7 @@ func (c *CLI) CachePrune(ctx context.Context, in *CachePrune) error {
 
 === TEMPLATE END ===`
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	if isAllowed(pass.Pkg.Path()) {
 		return nil, nil
 	}

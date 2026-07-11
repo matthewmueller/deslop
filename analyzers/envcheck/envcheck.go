@@ -42,7 +42,7 @@ func Load() (*Env, error) {
     return env, nil
 }`
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	if strings.HasSuffix(pass.Pkg.Path(), "internal/env") {
 		return nil, nil
 	}
