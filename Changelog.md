@@ -1,4 +1,9 @@
 
+# 0.0.9 / 2026-07-12
+
+- improvements using type info
+- add a noerrdiscard lint
+
 # 0.0.8 / 2026-07-12
 
 - more fixes
