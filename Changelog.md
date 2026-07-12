@@ -1,4 +1,8 @@
 
+# 0.0.8 / 2026-07-12
+
+- more fixes
+
 # 0.0.7 / 2026-07-12
 
 - few fixes after usage
