@@ -1,4 +1,11 @@
 
+# 0.0.6 / 2026-07-12
+
+  - add noelse check (flag any else block)
+  - add nogetter check (flag GetX methods)
+  - add lowercaseerror check (flag uppercase error strings)
+  - add nostutter check (flag types that repeat package name)
+
 # 0.0.5 / 2026-07-11
 
   - add more checks + readme
