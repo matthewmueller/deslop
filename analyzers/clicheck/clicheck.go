@@ -9,6 +9,8 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+var includeTests bool
+
 var Analyzer = &analysis.Analyzer{
 	Name:     "clicheck",
 	Doc:      "reports direct os.Args access and flag parsing outside internal/cli",
@@ -16,9 +18,16 @@ var Analyzer = &analysis.Analyzer{
 	Run:      run,
 }
 
+func init() {
+	Analyzer.Flags.BoolVar(&includeTests, "tests", false, "check test files too")
+}
+
 // flaggedImports contains package paths that indicate direct CLI parsing.
 var flaggedImports = map[string]bool{
-	"flag": true,
+	"flag":                    true,
+	"github.com/spf13/cobra": true,
+	"github.com/urfave/cli":  true,
+	"github.com/urfave/cli/v2": true,
 }
 
 const template = `If internal/cli does not exist, create internal/cli/cli.go with this template.
@@ -174,6 +183,9 @@ func run(pass *analysis.Pass) (any, error) {
 	if isAllowed(pass.Pkg.Path()) {
 		return nil, nil
 	}
+	if !includeTests && isTestPackage(pass) {
+		return nil, nil
+	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -206,4 +218,14 @@ func run(pass *analysis.Pass) (any, error) {
 func isAllowed(pkgPath string) bool {
 	return strings.HasSuffix(pkgPath, "internal/cli") ||
 		strings.Contains(pkgPath, "internal/cli/")
+}
+
+func isTestPackage(pass *analysis.Pass) bool {
+	for _, f := range pass.Files {
+		name := pass.Fset.File(f.Pos()).Name()
+		if strings.HasSuffix(name, "_test.go") {
+			return true
+		}
+	}
+	return false
 }

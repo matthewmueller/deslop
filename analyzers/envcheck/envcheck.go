@@ -10,11 +10,17 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+var includeTests bool
+
 var Analyzer = &analysis.Analyzer{
 	Name:     "envcheck",
 	Doc:      "reports direct os.Getenv/os.LookupEnv calls; use internal/env instead",
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 	Run:      run,
+}
+
+func init() {
+	Analyzer.Flags.BoolVar(&includeTests, "tests", false, "check test files too")
 }
 
 var flagged = map[string]bool{
@@ -44,6 +50,9 @@ func Load() (*Env, error) {
 
 func run(pass *analysis.Pass) (any, error) {
 	if strings.HasSuffix(pass.Pkg.Path(), "internal/env") {
+		return nil, nil
+	}
+	if !includeTests && isTestPackage(pass) {
 		return nil, nil
 	}
 
@@ -79,6 +88,16 @@ func run(pass *analysis.Pass) (any, error) {
 	})
 
 	return nil, nil
+}
+
+func isTestPackage(pass *analysis.Pass) bool {
+	for _, f := range pass.Files {
+		name := pass.Fset.File(f.Pos()).Name()
+		if strings.HasSuffix(name, "_test.go") {
+			return true
+		}
+	}
+	return false
 }
 
 func extractStringArg(call *ast.CallExpr) string {
