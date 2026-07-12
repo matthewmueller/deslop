@@ -62,7 +62,7 @@ func checkForTableTest(pass *analysis.Pass, body *ast.BlockStmt) {
 			continue
 		}
 		if isTableLiteral(rangeStmt.X, body) {
-			pass.Reportf(rangeStmt.Pos(), "avoid table-driven tests; use top-level TestX functions with helper functions instead")
+			pass.Reportf(rangeStmt.Pos(), "avoid table-driven tests; instead either inline the assertions in a single test function or break into separate TestX functions if the cases are meaningfully different")
 		}
 	}
 }

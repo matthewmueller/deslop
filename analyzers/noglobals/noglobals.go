@@ -47,9 +47,15 @@ func run(pass *analysis.Pass) (any, error) {
 }
 
 func isAllowed(name string) bool {
+	// Allow unexported (private) vars.
+	if len(name) > 0 && name[0] >= 'a' && name[0] <= 'z' {
+		return true
+	}
+	// Allow Err* sentinels.
 	if strings.HasPrefix(name, "Err") {
 		return true
 	}
+	// Allow blank identifier compile-time checks.
 	if name == "_" {
 		return true
 	}
