@@ -42,8 +42,8 @@ func runNaming(pass *analysis.Pass) (any, error) {
 		// Flag Test_Something but not TestSomething.
 		name := fn.Name.Name
 		after := strings.TrimPrefix(name, "Test")
-		if strings.HasPrefix(after, "_") {
-			pass.Reportf(fn.Name.Pos(), "avoid underscores in test names; use %q instead of %q", "Test"+strings.TrimPrefix(after, "_"), name)
+		if after0, ok := strings.CutPrefix(after, "_"); ok {
+			pass.Reportf(fn.Name.Pos(), "avoid underscores in test names; use %q instead of %q", "Test"+after0, name)
 		}
 	})
 
