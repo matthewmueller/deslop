@@ -8,7 +8,6 @@ import (
 	"github.com/mattmueller/deslop/analyzers/noglobals"
 	"github.com/mattmueller/deslop/analyzers/nolog"
 	"github.com/mattmueller/deslop/analyzers/notabletest"
-	"github.com/mattmueller/deslop/analyzers/returncheck"
 	"golang.org/x/tools/go/analysis/multichecker"
 )
 
@@ -21,6 +20,5 @@ func main() {
 		ischeck.Analyzer,
 		noglobals.Analyzer,
 		nolog.Analyzer,
-		returncheck.Analyzer,
 	)
 }
