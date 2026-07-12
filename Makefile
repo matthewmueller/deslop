@@ -17,7 +17,7 @@ release: test
 	@ git commit -am "Release v$(VERSION)"
 	@ git tag "v$(VERSION)"
 	@ git push origin main "v$(VERSION)"
-	@ go run github.com/cli/cli/v2/cmd/gh@latest release create --generate-notes "v$(VERSION)"
+	@ GH_HOST=github.com go run github.com/cli/cli/v2/cmd/gh@latest release create --generate-notes "v$(VERSION)"
 	@ $(MAKE) install
 
 install:
