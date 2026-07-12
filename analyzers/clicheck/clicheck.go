@@ -9,25 +9,18 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var includeTests bool
-
-var Analyzer = &analysis.Analyzer{
-	Name:     "clicheck",
-	Doc:      "reports direct os.Args access and flag parsing outside internal/cli",
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
-}
-
-func init() {
-	Analyzer.Flags.BoolVar(&includeTests, "tests", false, "check test files too")
-}
-
-// flaggedImports contains package paths that indicate direct CLI parsing.
-var flaggedImports = map[string]bool{
-	"flag":                    true,
-	"github.com/spf13/cobra": true,
-	"github.com/urfave/cli":  true,
-	"github.com/urfave/cli/v2": true,
+func New() *analysis.Analyzer {
+	a := &analysis.Analyzer{
+		Name:     "clicheck",
+		Doc:      "reports direct os.Args access and flag parsing outside internal/cli",
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+	var includeTests bool
+	a.Flags.BoolVar(&includeTests, "tests", false, "check test files too")
+	a.Run = func(pass *analysis.Pass) (any, error) {
+		return run(pass, includeTests)
+	}
+	return a
 }
 
 const template = `If internal/cli does not exist, create internal/cli/cli.go with this template.
@@ -179,12 +172,19 @@ func (c *CLI) CachePrune(ctx context.Context, in *CachePrune) error {
 
 === TEMPLATE END ===`
 
-func run(pass *analysis.Pass) (any, error) {
+func run(pass *analysis.Pass, includeTests bool) (any, error) {
 	if isAllowed(pass.Pkg.Path()) {
 		return nil, nil
 	}
 	if !includeTests && isTestPackage(pass) {
 		return nil, nil
+	}
+
+	flaggedImports := map[string]bool{
+		"flag":                     true,
+		"github.com/spf13/cobra":  true,
+		"github.com/urfave/cli":   true,
+		"github.com/urfave/cli/v2": true,
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)

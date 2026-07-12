@@ -9,11 +9,13 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name:     "nolog",
-	Doc:      "reports use of stdlib log package; use log/slog with structured fields instead",
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+func New() *analysis.Analyzer {
+	return &analysis.Analyzer{
+		Name:     "nolog",
+		Doc:      "reports use of stdlib log package; use log/slog with structured fields instead",
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Run:      run,
+	}
 }
 
 const template = `Use log/slog with structured fields and package-prefixed messages.
@@ -61,20 +63,19 @@ func (s *Server) Handle(ctx context.Context, r *http.Request) {
 
 === TEMPLATE END ===`
 
-var flaggedCalls = map[string]bool{
-	"Print":   true,
-	"Printf":  true,
-	"Println": true,
-	"Fatal":   true,
-	"Fatalf":  true,
-	"Fatalln": true,
-	"Panic":   true,
-	"Panicf":  true,
-	"Panicln": true,
-}
-
 func run(pass *analysis.Pass) (any, error) {
-	// Skip test files.
+	flaggedCalls := map[string]bool{
+		"Print":   true,
+		"Printf":  true,
+		"Println": true,
+		"Fatal":   true,
+		"Fatalf":  true,
+		"Fatalln": true,
+		"Panic":   true,
+		"Panicf":  true,
+		"Panicln": true,
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{

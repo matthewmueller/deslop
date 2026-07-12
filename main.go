@@ -13,12 +13,12 @@ import (
 
 func main() {
 	multichecker.Main(
-		nofmt.Analyzer,
-		envcheck.Analyzer,
-		clicheck.Analyzer,
-		notabletest.Analyzer,
-		ischeck.Analyzer,
-		noglobals.Analyzer,
-		nolog.Analyzer,
+		nofmt.New(),
+		envcheck.New(),
+		clicheck.New(),
+		notabletest.New(),
+		ischeck.New(),
+		noglobals.New(),
+		nolog.New(),
 	)
 }

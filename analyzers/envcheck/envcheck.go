@@ -10,24 +10,6 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var includeTests bool
-
-var Analyzer = &analysis.Analyzer{
-	Name:     "envcheck",
-	Doc:      "reports direct os.Getenv/os.LookupEnv calls; use internal/env instead",
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
-}
-
-func init() {
-	Analyzer.Flags.BoolVar(&includeTests, "tests", false, "check test files too")
-}
-
-var flagged = map[string]bool{
-	"Getenv":    true,
-	"LookupEnv": true,
-}
-
 const template = `package env
 
 import (
@@ -48,12 +30,31 @@ func Load() (*Env, error) {
     return env, nil
 }`
 
-func run(pass *analysis.Pass) (any, error) {
+func New() *analysis.Analyzer {
+	a := &analysis.Analyzer{
+		Name:     "envcheck",
+		Doc:      "reports direct os.Getenv/os.LookupEnv calls; use internal/env instead",
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+	var includeTests bool
+	a.Flags.BoolVar(&includeTests, "tests", false, "check test files too")
+	a.Run = func(pass *analysis.Pass) (any, error) {
+		return run(pass, includeTests)
+	}
+	return a
+}
+
+func run(pass *analysis.Pass, includeTests bool) (any, error) {
 	if strings.HasSuffix(pass.Pkg.Path(), "internal/env") {
 		return nil, nil
 	}
 	if !includeTests && isTestPackage(pass) {
 		return nil, nil
+	}
+
+	flagged := map[string]bool{
+		"Getenv":    true,
+		"LookupEnv": true,
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)

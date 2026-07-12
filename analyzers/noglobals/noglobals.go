@@ -8,17 +8,22 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name: "noglobals",
-	Doc:  "reports package-level var declarations; use constructor injection instead",
-	Run:  run,
+func New() *analysis.Analyzer {
+	return &analysis.Analyzer{
+		Name: "noglobals",
+		Doc:  "reports package-level var declarations; use constructor injection instead",
+		Run:  run,
+	}
 }
 
 func run(pass *analysis.Pass) (any, error) {
 	for _, f := range pass.Files {
-		// Skip test files.
 		name := pass.Fset.File(f.Pos()).Name()
 		if strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		// Skip generated files (e.g., Go's test main from the build cache).
+		if !strings.HasSuffix(name, ".go") || strings.Contains(name, "/go-build/") {
 			continue
 		}
 
@@ -30,7 +35,7 @@ func run(pass *analysis.Pass) (any, error) {
 			for _, spec := range gen.Specs {
 				vs := spec.(*ast.ValueSpec)
 				for _, ident := range vs.Names {
-					if isAllowed(ident.Name, vs) {
+					if isAllowed(ident.Name) {
 						continue
 					}
 					pass.Reportf(ident.Pos(), "avoid package-level var %q; use constructor injection instead", ident.Name)
@@ -41,12 +46,10 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-func isAllowed(name string, spec *ast.ValueSpec) bool {
-	// Allow Err* sentinels (e.g., var ErrNotFound = errors.New("..."))
+func isAllowed(name string) bool {
 	if strings.HasPrefix(name, "Err") {
 		return true
 	}
-	// Allow blank identifier compile-time checks (var _ Interface = (*Type)(nil))
 	if name == "_" {
 		return true
 	}

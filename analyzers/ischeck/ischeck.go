@@ -9,24 +9,13 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name:     "ischeck",
-	Doc:      "reports direct t.Fatal/t.Error calls in tests; use github.com/matryer/is instead",
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
-}
-
-var flaggedMethods = map[string]bool{
-	"Fatal":  true,
-	"Fatalf": true,
-	"Error":  true,
-	"Errorf": true,
-}
-
-var flaggedImports = map[string]bool{
-	"github.com/stretchr/testify":         true,
-	"github.com/stretchr/testify/assert":  true,
-	"github.com/stretchr/testify/require": true,
+func New() *analysis.Analyzer {
+	return &analysis.Analyzer{
+		Name:     "ischeck",
+		Doc:      "reports direct t.Fatal/t.Error calls in tests; use github.com/matryer/is instead",
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Run:      run,
+	}
 }
 
 const template = `Use github.com/matryer/is for test assertions. The API:
@@ -89,6 +78,19 @@ func run(pass *analysis.Pass) (any, error) {
 	}
 	if !hasTestFile {
 		return nil, nil
+	}
+
+	flaggedImports := map[string]bool{
+		"github.com/stretchr/testify":         true,
+		"github.com/stretchr/testify/assert":  true,
+		"github.com/stretchr/testify/require": true,
+	}
+
+	flaggedMethods := map[string]bool{
+		"Fatal":  true,
+		"Fatalf": true,
+		"Error":  true,
+		"Errorf": true,
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
