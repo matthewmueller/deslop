@@ -2,6 +2,7 @@ package nolog
 
 import (
 	"go/ast"
+	"go/types"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -95,23 +96,43 @@ func run(pass *analysis.Pass) (any, error) {
 				pass.Reportf(node.Pos(), "do not use the stdlib \"log\" package; use log/slog instead\n\n%s", template)
 			}
 		case *ast.CallExpr:
-			sel, ok := node.Fun.(*ast.SelectorExpr)
-			if !ok {
-				return
-			}
-			ident, ok := sel.X.(*ast.Ident)
-			if !ok {
-				return
-			}
-			if ident.Name == "log" && flaggedCalls[sel.Sel.Name] {
-				pos := pass.Fset.Position(node.Pos())
-				if strings.HasSuffix(pos.Filename, "_test.go") {
-					return
-				}
-				pass.Reportf(node.Pos(), "do not use log.%s; use log/slog with structured fields instead\n\n%s", sel.Sel.Name, template)
-			}
+			checkLogCall(pass, node, flaggedCalls)
 		}
 	})
 
 	return nil, nil
+}
+
+func checkLogCall(pass *analysis.Pass, node *ast.CallExpr, flagged map[string]bool) {
+	sel, ok := node.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return
+	}
+	ident, ok := sel.X.(*ast.Ident)
+	if !ok {
+		return
+	}
+	if !flagged[sel.Sel.Name] {
+		return
+	}
+	if !isPackageIdent(pass, ident, "log") {
+		return
+	}
+	pos := pass.Fset.Position(node.Pos())
+	if strings.HasSuffix(pos.Filename, "_test.go") {
+		return
+	}
+	pass.Reportf(node.Pos(), "do not use log.%s; use log/slog with structured fields instead\n\n%s", sel.Sel.Name, template)
+}
+
+func isPackageIdent(pass *analysis.Pass, ident *ast.Ident, pkgPath string) bool {
+	obj := pass.TypesInfo.Uses[ident]
+	if obj == nil {
+		return false
+	}
+	pkgName, ok := obj.(*types.PkgName)
+	if !ok {
+		return false
+	}
+	return pkgName.Imported().Path() == pkgPath
 }

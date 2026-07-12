@@ -11,3 +11,8 @@ func TestAnalyzer(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, contextfirst.New(), "example")
 }
+
+func TestAliasedImport(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, contextfirst.New(), "aliased")
+}

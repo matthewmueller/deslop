@@ -3,6 +3,7 @@ package envcheck
 import (
 	"fmt"
 	"go/ast"
+	"go/types"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -65,30 +66,49 @@ func run(pass *analysis.Pass, includeTests bool) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
-		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if !ok {
-			return
-		}
-		ident, ok := sel.X.(*ast.Ident)
-		if !ok {
-			return
-		}
-		if ident.Name != "os" || !flagged[sel.Sel.Name] {
-			return
-		}
-
-		envVar := extractStringArg(call)
-		msg := fmt.Sprintf(
-			"do not use os.%s directly; add %s to the Env struct in internal/env/env.go and load it via env.Load()\n\n"+
-				"If internal/env/env.go does not exist, create it with this template:\n\n%s",
-			sel.Sel.Name,
-			envVar,
-			fmt.Sprintf(template, envVar, envVar),
-		)
-		pass.Reportf(call.Pos(), "%s", msg)
+		checkEnvCall(pass, call, flagged)
 	})
 
 	return nil, nil
+}
+
+func checkEnvCall(pass *analysis.Pass, call *ast.CallExpr, flagged map[string]bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return
+	}
+	ident, ok := sel.X.(*ast.Ident)
+	if !ok {
+		return
+	}
+	if !flagged[sel.Sel.Name] {
+		return
+	}
+	if !isPackageIdent(pass, ident, "os") {
+		return
+	}
+
+	envVar := extractStringArg(call)
+	msg := fmt.Sprintf(
+		"do not use os.%s directly; add %s to the Env struct in internal/env/env.go and load it via env.Load()\n\n"+
+			"If internal/env/env.go does not exist, create it with this template:\n\n%s",
+		sel.Sel.Name,
+		envVar,
+		fmt.Sprintf(template, envVar, envVar),
+	)
+	pass.Reportf(call.Pos(), "%s", msg)
+}
+
+func isPackageIdent(pass *analysis.Pass, ident *ast.Ident, pkgPath string) bool {
+	obj := pass.TypesInfo.Uses[ident]
+	if obj == nil {
+		return false
+	}
+	pkgName, ok := obj.(*types.PkgName)
+	if !ok {
+		return false
+	}
+	return pkgName.Imported().Path() == pkgPath
 }
 
 func isTestPackage(pass *analysis.Pass) bool {

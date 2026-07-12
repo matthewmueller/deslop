@@ -43,29 +43,25 @@ func checkFunc(pass *analysis.Pass, fn *ast.FuncDecl) {
 	}
 
 	// Check if first param is context.Context — if so, no issue.
-	if isContextContext(params.List[0].Type) {
+	if isContextType(pass, params.List[0].Type) {
 		return
 	}
 
 	// Check remaining params for context.Context.
 	for i := 1; i < len(params.List); i++ {
-		if isContextContext(params.List[i].Type) {
+		if isContextType(pass, params.List[i].Type) {
 			pass.Reportf(fn.Pos(), "context.Context should be the first parameter of %s", fn.Name.Name)
 			return
 		}
 	}
 }
 
-func isContextContext(expr ast.Expr) bool {
-	sel, ok := expr.(*ast.SelectorExpr)
+func isContextType(pass *analysis.Pass, expr ast.Expr) bool {
+	tv, ok := pass.TypesInfo.Types[expr]
 	if !ok {
 		return false
 	}
-	ident, ok := sel.X.(*ast.Ident)
-	if !ok {
-		return false
-	}
-	return ident.Name == "context" && sel.Sel.Name == "Context"
+	return tv.Type.String() == "context.Context"
 }
 
 func isExported(name string) bool {

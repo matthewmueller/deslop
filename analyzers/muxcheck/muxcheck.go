@@ -2,6 +2,7 @@ package muxcheck
 
 import (
 	"go/ast"
+	"go/types"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -80,7 +81,6 @@ func New() *analysis.Analyzer {
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	// Skip test files.
 	flaggedImports := map[string]bool{
 		"github.com/gorilla/mux":              true,
 		"github.com/julienschmidt/httprouter": true,
@@ -106,20 +106,39 @@ func run(pass *analysis.Pass) (any, error) {
 				pass.Reportf(node.Pos(), "do not use %q; use github.com/livebud/mux instead\n\n%s", path, template)
 			}
 		case *ast.CallExpr:
-			// Flag http.NewServeMux()
-			sel, ok := node.Fun.(*ast.SelectorExpr)
-			if !ok {
-				return
-			}
-			ident, ok := sel.X.(*ast.Ident)
-			if !ok {
-				return
-			}
-			if ident.Name == "http" && sel.Sel.Name == "NewServeMux" {
-				pass.Reportf(node.Pos(), "do not use http.NewServeMux; use github.com/livebud/mux instead\n\n%s", template)
-			}
+			checkMuxCall(pass, node)
 		}
 	})
 
 	return nil, nil
+}
+
+func checkMuxCall(pass *analysis.Pass, node *ast.CallExpr) {
+	sel, ok := node.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return
+	}
+	ident, ok := sel.X.(*ast.Ident)
+	if !ok {
+		return
+	}
+	if sel.Sel.Name != "NewServeMux" {
+		return
+	}
+	if !isPackageIdent(pass, ident, "net/http") {
+		return
+	}
+	pass.Reportf(node.Pos(), "do not use http.NewServeMux; use github.com/livebud/mux instead\n\n%s", template)
+}
+
+func isPackageIdent(pass *analysis.Pass, ident *ast.Ident, pkgPath string) bool {
+	obj := pass.TypesInfo.Uses[ident]
+	if obj == nil {
+		return false
+	}
+	pkgName, ok := obj.(*types.PkgName)
+	if !ok {
+		return false
+	}
+	return pkgName.Imported().Path() == pkgPath
 }

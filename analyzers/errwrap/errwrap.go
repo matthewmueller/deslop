@@ -2,6 +2,7 @@ package errwrap
 
 import (
 	"go/ast"
+	"go/types"
 	"slices"
 	"strings"
 
@@ -17,6 +18,8 @@ func New() *analysis.Analyzer {
 }
 
 func run(pass *analysis.Pass) (any, error) {
+	errIface := types.Universe.Lookup("error").Type().Underlying().(*types.Interface)
+
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
@@ -36,7 +39,7 @@ func run(pass *analysis.Pass) (any, error) {
 			if strings.Contains(lit.Value, "%w") {
 				return true
 			}
-			if !hasErrorArg(call.Args[1:]) {
+			if !hasErrorArg(pass, call.Args[1:], errIface) {
 				return true
 			}
 			pass.Reportf(call.Pos(), "use %%w in fmt.Errorf to wrap errors instead of %%v or %%s")
@@ -46,26 +49,14 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-func hasErrorArg(args []ast.Expr) bool {
-	return slices.ContainsFunc(args, isErrorExpr)
-}
-
-func isErrorExpr(expr ast.Expr) bool {
-	switch e := expr.(type) {
-	case *ast.Ident:
-		name := e.Name
-		return name == "err" || strings.HasPrefix(name, "err") || strings.HasSuffix(name, "Err") || strings.HasSuffix(name, "err")
-	case *ast.CallExpr:
-		sel, ok := e.Fun.(*ast.SelectorExpr)
-		if !ok {
+func hasErrorArg(pass *analysis.Pass, args []ast.Expr, errIface *types.Interface) bool {
+	return slices.ContainsFunc(args, func(expr ast.Expr) bool {
+		t := pass.TypesInfo.TypeOf(expr)
+		if t == nil {
 			return false
 		}
-		return sel.Sel.Name == "Error"
-	case *ast.SelectorExpr:
-		name := e.Sel.Name
-		return name == "Err" || strings.HasPrefix(name, "err") || strings.HasSuffix(name, "Err")
-	}
-	return false
+		return types.Implements(t, errIface)
+	})
 }
 
 func isFmtErrorf(call *ast.CallExpr) bool {

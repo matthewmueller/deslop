@@ -10,6 +10,7 @@ import (
 	"github.com/matthewmueller/deslop/analyzers/lowercaseerror"
 	"github.com/matthewmueller/deslop/analyzers/muxcheck"
 	"github.com/matthewmueller/deslop/analyzers/nocommentedcode"
+	"github.com/matthewmueller/deslop/analyzers/noerrdiscard"
 	"github.com/matthewmueller/deslop/analyzers/noelse"
 	"github.com/matthewmueller/deslop/analyzers/nofmt"
 	"github.com/matthewmueller/deslop/analyzers/nogetter"
@@ -41,6 +42,7 @@ func main() {
 		nogetter.New(),
 		lowercaseerror.New(),
 		nostutter.New(),
+		noerrdiscard.New(),
 	}
 	analyzers = append(analyzers, testcheck.New()...)
 	analyzers = append(analyzers, complexity.New()...)
