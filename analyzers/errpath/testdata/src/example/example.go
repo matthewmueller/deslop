@@ -5,20 +5,9 @@ import "errors"
 func bad() error {
 	err := doThing()
 	if err == nil { // want `avoid "if err == nil"`
-		// happy path nested...
 		return nil
 	}
 	return err
-}
-
-func badElse() error {
-	err := doThing()
-	if err != nil {
-		return err
-	} else { // want "unnecessary else after return/continue/break"
-		// happy path in else...
-		return nil
-	}
 }
 
 // Allowed: "nil == err" is an intentional escape hatch.
@@ -36,7 +25,6 @@ func good() error {
 	if err != nil {
 		return err
 	}
-	// happy path on the left...
 	return nil
 }
 

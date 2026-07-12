@@ -61,6 +61,11 @@ func checkSpec(pass *analysis.Pass, spec ast.Spec, pkgName, prefix string) {
 	if len(suffix) == 0 {
 		return
 	}
+	// Only flag if suffix starts with uppercase (new word boundary).
+	// "tail.Tailer" (suffix "er") is fine; "tail.TailFind" (suffix "Find") stutters.
+	if suffix[0] < 'A' || suffix[0] > 'Z' {
+		return
+	}
 	msg := fmt.Sprintf(
 		"type %s stutters with package name %s; consider renaming to %s",
 		typeName, pkgName, suffix,

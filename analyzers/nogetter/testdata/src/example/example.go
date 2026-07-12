@@ -24,3 +24,8 @@ func (u *User) Get() string {
 func (u *User) Name() string {
 	return u.name
 }
+
+// GetID implements SomeInterface.
+func (u *User) GetID() string {
+	return "123"
+}
