@@ -65,20 +65,31 @@ func isTableLiteral(expr ast.Expr, body *ast.BlockStmt) bool {
 	case *ast.CompositeLit:
 		return isSliceOfStruct(x.Type)
 	case *ast.Ident:
-		for _, stmt := range body.List {
-			switch s := stmt.(type) {
-			case *ast.AssignStmt:
-				for i, lhs := range s.Lhs {
-					ident, ok := lhs.(*ast.Ident)
-					if !ok || ident.Name != x.Name {
-						continue
-					}
-					if i < len(s.Rhs) {
-						if lit, ok := s.Rhs[i].(*ast.CompositeLit); ok {
-							return isSliceOfStruct(lit.Type)
-						}
-					}
-				}
+		return identRefersToStructSlice(x.Name, body)
+	}
+	return false
+}
+
+func identRefersToStructSlice(name string, body *ast.BlockStmt) bool {
+	for _, stmt := range body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok {
+			continue
+		}
+		for i, lhs := range assign.Lhs {
+			ident, ok := lhs.(*ast.Ident)
+			if !ok || ident.Name != name {
+				continue
+			}
+			if i >= len(assign.Rhs) {
+				continue
+			}
+			lit, ok := assign.Rhs[i].(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+			if isSliceOfStruct(lit.Type) {
+				return true
 			}
 		}
 	}

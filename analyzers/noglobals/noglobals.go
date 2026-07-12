@@ -26,24 +26,31 @@ func run(pass *analysis.Pass) (any, error) {
 		if !strings.HasSuffix(name, ".go") || strings.Contains(name, "/go-build/") {
 			continue
 		}
-
-		for _, decl := range f.Decls {
-			gen, ok := decl.(*ast.GenDecl)
-			if !ok || gen.Tok != token.VAR {
-				continue
-			}
-			for _, spec := range gen.Specs {
-				vs := spec.(*ast.ValueSpec)
-				for _, ident := range vs.Names {
-					if isAllowed(ident.Name) {
-						continue
-					}
-					pass.Reportf(ident.Pos(), "avoid package-level var %q; use constructor injection instead", ident.Name)
-				}
-			}
-		}
+		checkFile(pass, f)
 	}
 	return nil, nil
+}
+
+func checkFile(pass *analysis.Pass, f *ast.File) {
+	for _, decl := range f.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.VAR {
+			continue
+		}
+		checkVarDecl(pass, gen)
+	}
+}
+
+func checkVarDecl(pass *analysis.Pass, gen *ast.GenDecl) {
+	for _, spec := range gen.Specs {
+		vs := spec.(*ast.ValueSpec)
+		for _, ident := range vs.Names {
+			if isAllowed(ident.Name) {
+				continue
+			}
+			pass.Reportf(ident.Pos(), "avoid package-level var %q; use constructor injection instead", ident.Name)
+		}
+	}
 }
 
 func isAllowed(name string) bool {
