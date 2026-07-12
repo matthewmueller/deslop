@@ -32,11 +32,11 @@ func runParams(pass *analysis.Pass, maxParams int) (any, error) {
 			}
 			count := 0
 			for _, field := range fn.Type.Params.List {
-				if len(field.Names) == 0 {
-					count++
-				} else {
-					count += len(field.Names)
+				names := len(field.Names)
+				if names == 0 {
+					names = 1
 				}
+				count += names
 			}
 			if count > maxParams {
 				msg := fmt.Sprintf("function %s has %d parameters (max %d); use an options struct instead", fn.Name.Name, count, maxParams)

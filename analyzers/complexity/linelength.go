@@ -39,11 +39,9 @@ func runLineLength(pass *analysis.Pass, maxLength int) (any, error) {
 		lineCount := tokFile.LineCount()
 		for i := 1; i <= lineCount; i++ {
 			lineStart := tokFile.LineStart(i)
-			var lineEnd token.Pos
+			lineEnd := token.Pos(tokFile.Base() + tokFile.Size())
 			if i < lineCount {
 				lineEnd = tokFile.LineStart(i+1) - 1
-			} else {
-				lineEnd = token.Pos(tokFile.Base() + tokFile.Size())
 			}
 			length := int(lineEnd) - int(lineStart)
 			if length <= maxLength {

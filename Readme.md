@@ -41,14 +41,18 @@ These analyzers flag discouraged patterns and include usage templates in the dia
 |----------|-------|
 | `errpath` | `if err == nil` (escape hatch: `nil == err`), unnecessary else after return |
 | `errwrap` | `fmt.Errorf` without `%w` |
+| `lowercaseerror` | `fmt.Errorf("Uppercase...")` — error strings should start lowercase |
 
 ### Code style
 
 | Analyzer | Flags |
 |----------|-------|
+| `noelse` | Any `else` block — use early returns instead |
 | `noglobals` | Exported package-level `var` (allows `Err*`, `_`, unexported) |
+| `nogetter` | Methods named `GetX` — just use the noun |
 | `noinit` | `init()` functions |
 | `nonakedreturn` | Bare `return` in named-return functions |
+| `nostutter` | Type names that repeat the package name (allows exact match like `user.User`) |
 | `contextfirst` | `context.Context` not as first parameter |
 | `nocommentedcode` | Commented-out code (function calls, `:=`, keywords) |
 | `nofmt` | `fmt.Println` |
