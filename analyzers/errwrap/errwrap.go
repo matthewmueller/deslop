@@ -2,6 +2,7 @@ package errwrap
 
 import (
 	"go/ast"
+	"slices"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -46,12 +47,7 @@ func run(pass *analysis.Pass) (any, error) {
 }
 
 func hasErrorArg(args []ast.Expr) bool {
-	for _, arg := range args {
-		if isErrorExpr(arg) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(args, isErrorExpr)
 }
 
 func isErrorExpr(expr ast.Expr) bool {
