@@ -61,6 +61,7 @@ func checkComments(pass *analysis.Pass, f *ast.File) {
 }
 
 func checkCommentGroup(pass *analysis.Pass, cg *ast.CommentGroup) {
+	// Report once per comment group if any line looks like code.
 	for _, c := range cg.List {
 		if !strings.HasPrefix(c.Text, "//") {
 			continue
@@ -73,7 +74,8 @@ func checkCommentGroup(pass *analysis.Pass, cg *ast.CommentGroup) {
 			continue
 		}
 		if looksLikeCode(text) {
-			pass.Reportf(c.Pos(), "commented-out code should be deleted, not commented; use version control to recover old code")
+			pass.Reportf(cg.Pos(), "commented-out code should be deleted, not commented; use version control to recover old code")
+			return
 		}
 	}
 }

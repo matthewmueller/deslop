@@ -10,16 +10,27 @@ func good(x int) string {
 func bad(x int) string {
 	if x > 0 {
 		return "positive"
-	} else { // want "avoid else blocks; use early returns instead"
+	} else { // want "avoid else blocks; use an early return or extract a separate function instead"
 		return "non-positive"
 	}
 }
 
+// Allowed: else if that returns.
+func goodElseIf(x int) string {
+	if x > 0 {
+		return "positive"
+	} else if x == 0 {
+		return "zero"
+	}
+	return "negative"
+}
+
+// Bad: else if that doesn't return.
 func badElseIf(x int) string {
 	if x > 0 {
 		return "positive"
-	} else if x == 0 { // want "avoid else blocks; use early returns instead"
-		return "zero"
+	} else if x == 0 { // want "avoid else blocks; use an early return or extract a separate function instead"
+		_ = "zero"
 	}
 	return "negative"
 }
