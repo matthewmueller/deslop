@@ -1,4 +1,4 @@
-package example
+package notable
 
 import "testing"
 
@@ -6,36 +6,26 @@ func TestTableInline(t *testing.T) {
 	for _, tt := range []struct { // want "avoid table-driven tests; instead either inline the assertions"
 		name string
 		in   int
-		out  int
 	}{
-		{"one", 1, 1},
-		{"two", 2, 4},
+		{"one", 1},
 	} {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.in*tt.in != tt.out {
-				t.Fatal("mismatch")
-			}
-		})
+		_ = tt
 	}
 }
 
 func TestTableVariable(t *testing.T) {
 	tests := []struct {
 		name string
-		in   int
 	}{
-		{"one", 1},
-		{"two", 2},
+		{"one"},
 	}
 	for _, tt := range tests { // want "avoid table-driven tests; instead either inline the assertions"
-		t.Run(tt.name, func(t *testing.T) {
-			_ = tt.in
-		})
+		_ = tt
 	}
 }
 
 func TestNotATable(t *testing.T) {
-	items := []string{"a", "b", "c"}
+	items := []string{"a", "b"}
 	for _, item := range items {
 		_ = item
 	}

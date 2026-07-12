@@ -1,4 +1,4 @@
-package example
+package ischeck
 
 import "testing"
 
@@ -14,8 +14,4 @@ func TestBadErrorf(t *testing.T) {
 func setup(t *testing.T) {
 	t.Helper()
 	t.Fatal("setup failed")
-}
-
-func TestUsesHelper(t *testing.T) {
-	setup(t)
 }

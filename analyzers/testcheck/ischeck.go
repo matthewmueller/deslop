@@ -1,4 +1,4 @@
-package ischeck
+package testcheck
 
 import (
 	"go/ast"
@@ -9,16 +9,17 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-func New() *analysis.Analyzer {
+// NewIsCheck reports direct t.Fatal/t.Error calls and discouraged test imports.
+func NewIsCheck() *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name:     "ischeck",
 		Doc:      "reports direct t.Fatal/t.Error calls in tests; use github.com/matryer/is instead",
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
-		Run:      run,
+		Run:      runIsCheck,
 	}
 }
 
-const template = `Use github.com/matryer/is for test assertions. The API:
+const isTemplate = `Use github.com/matryer/is for test assertions. The API:
   - is.Equal(got, want) asserts got == want (uses reflect.DeepEqual for structs/slices)
   - is.True(expr) asserts expr is true
   - is.NoErr(err) asserts err is nil
@@ -67,16 +68,8 @@ func TestClientGet(t *testing.T) {
 
 === TEMPLATE END ===`
 
-func run(pass *analysis.Pass) (any, error) {
-	hasTestFile := false
-	for _, f := range pass.Files {
-		name := pass.Fset.File(f.Pos()).Name()
-		if strings.HasSuffix(name, "_test.go") {
-			hasTestFile = true
-			break
-		}
-	}
-	if !hasTestFile {
+func runIsCheck(pass *analysis.Pass) (any, error) {
+	if !hasTestFiles(pass) {
 		return nil, nil
 	}
 
@@ -105,7 +98,7 @@ func run(pass *analysis.Pass) (any, error) {
 		case *ast.ImportSpec:
 			path := strings.Trim(node.Path.Value, `"`)
 			if flaggedImports[path] {
-				pass.Reportf(node.Pos(), "do not use %q; use github.com/matryer/is instead\n\n%s", path, template)
+				pass.Reportf(node.Pos(), "do not use %q; use github.com/matryer/is instead\n\n%s", path, isTemplate)
 			}
 		case *ast.CallExpr:
 			sel, ok := node.Fun.(*ast.SelectorExpr)
@@ -129,7 +122,7 @@ func run(pass *analysis.Pass) (any, error) {
 			if isInHelper(pass, node) {
 				return
 			}
-			pass.Reportf(node.Pos(), "avoid t.%s for assertions; use github.com/matryer/is instead\n\n%s", sel.Sel.Name, template)
+			pass.Reportf(node.Pos(), "avoid t.%s for assertions; use github.com/matryer/is instead\n\n%s", sel.Sel.Name, isTemplate)
 		}
 	})
 
@@ -138,7 +131,6 @@ func run(pass *analysis.Pass) (any, error) {
 
 // isInHelper checks if the call is inside a function that calls t.Helper().
 func isInHelper(pass *analysis.Pass, call *ast.CallExpr) bool {
-	// Walk up to find the enclosing function.
 	for _, f := range pass.Files {
 		for _, decl := range f.Decls {
 			fn, ok := decl.(*ast.FuncDecl)

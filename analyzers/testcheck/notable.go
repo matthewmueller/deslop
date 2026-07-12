@@ -1,4 +1,4 @@
-package notabletest
+package testcheck
 
 import (
 	"go/ast"
@@ -9,25 +9,18 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-func New() *analysis.Analyzer {
+// NewNoTable reports table-driven tests.
+func NewNoTable() *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name:     "notabletest",
-		Doc:      "reports table-driven tests; use top-level TestX functions with helpers instead",
+		Doc:      "reports table-driven tests; inline assertions or break into separate TestX functions",
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
-		Run:      run,
+		Run:      runNoTable,
 	}
 }
 
-func run(pass *analysis.Pass) (any, error) {
-	hasTestFile := false
-	for _, f := range pass.Files {
-		name := pass.Fset.File(f.Pos()).Name()
-		if strings.HasSuffix(name, "_test.go") {
-			hasTestFile = true
-			break
-		}
-	}
-	if !hasTestFile {
+func runNoTable(pass *analysis.Pass) (any, error) {
+	if !hasTestFiles(pass) {
 		return nil, nil
 	}
 
