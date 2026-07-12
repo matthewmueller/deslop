@@ -3,7 +3,7 @@ package clicheck_test
 import (
 	"testing"
 
-	"github.com/mattmueller/deslop/analyzers/clicheck"
+	"github.com/matthewmueller/deslop/analyzers/clicheck"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

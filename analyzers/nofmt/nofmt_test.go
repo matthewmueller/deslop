@@ -3,7 +3,7 @@ package nofmt_test
 import (
 	"testing"
 
-	"github.com/mattmueller/deslop/analyzers/nofmt"
+	"github.com/matthewmueller/deslop/analyzers/nofmt"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

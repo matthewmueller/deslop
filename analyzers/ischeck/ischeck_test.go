@@ -3,7 +3,7 @@ package ischeck_test
 import (
 	"testing"
 
-	"github.com/mattmueller/deslop/analyzers/ischeck"
+	"github.com/matthewmueller/deslop/analyzers/ischeck"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

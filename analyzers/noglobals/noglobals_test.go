@@ -3,7 +3,7 @@ package noglobals_test
 import (
 	"testing"
 
-	"github.com/mattmueller/deslop/analyzers/noglobals"
+	"github.com/matthewmueller/deslop/analyzers/noglobals"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

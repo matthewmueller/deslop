@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/mattmueller/deslop/analyzers/clicheck"
-	"github.com/mattmueller/deslop/analyzers/envcheck"
-	"github.com/mattmueller/deslop/analyzers/ischeck"
-	"github.com/mattmueller/deslop/analyzers/nofmt"
-	"github.com/mattmueller/deslop/analyzers/noglobals"
-	"github.com/mattmueller/deslop/analyzers/nolog"
-	"github.com/mattmueller/deslop/analyzers/notabletest"
+	"github.com/matthewmueller/deslop/analyzers/clicheck"
+	"github.com/matthewmueller/deslop/analyzers/envcheck"
+	"github.com/matthewmueller/deslop/analyzers/ischeck"
+	"github.com/matthewmueller/deslop/analyzers/nofmt"
+	"github.com/matthewmueller/deslop/analyzers/noglobals"
+	"github.com/matthewmueller/deslop/analyzers/nolog"
+	"github.com/matthewmueller/deslop/analyzers/notabletest"
 	"golang.org/x/tools/go/analysis/multichecker"
 )
 

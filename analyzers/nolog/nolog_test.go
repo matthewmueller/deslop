@@ -3,7 +3,7 @@ package nolog_test
 import (
 	"testing"
 
-	"github.com/mattmueller/deslop/analyzers/nolog"
+	"github.com/matthewmueller/deslop/analyzers/nolog"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

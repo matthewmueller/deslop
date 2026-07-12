@@ -1,4 +1,4 @@
-module github.com/mattmueller/deslop
+module github.com/matthewmueller/deslop
 
 go 1.25.5
 
