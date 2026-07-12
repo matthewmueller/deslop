@@ -1,4 +1,8 @@
 
+# 0.0.5 / 2026-07-11
+
+  - add more checks + readme
+
 # 0.0.4 / 2026-07-11
 
   - add muxcheck
